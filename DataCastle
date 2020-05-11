@@ -1,0 +1,161 @@
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import seaborn as sb
+import matplotlib.pyplot as plt
+import lightgbm as lgb
+import xgboost as xgb
+from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import RandomizedSearchCV, KFold,GridSearchCV
+from sklearn.metrics import r2_score,mean_absolute_error,mean_squared_error
+from sklearn.preprocessing import StandardScaler,RobustScaler,LabelEncoder,PowerTransformer
+from sklearn.ensemble import GradientBoostingRegressor,StackingRegressor, RandomForestRegressor
+from sklearn.linear_model import ElasticNetCV, LassoCV, RidgeCV
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.pipeline import make_pipeline
+import warnings
+warnings.filterwarnings('ignore')
+%matplotlib inline
+
+# Input data files are available in the "../input/" directory.
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import warnings
+warnings.filterwarnings("ignore")
+
+train=pd.read_csv('C:/Users/pc/Desktop/rent_forecast/train.csv')
+test=pd.read_csv('C:/Users/pc/Desktop/rent_forecast/test_noLabel.csv')
+sample_sub=pd.read_csv('C:/Users/pc/Desktop/rent_forecast/submit_example.csv')
+
+train_test=pd.concat([train,test],axis=0,sort=False)
+train_test.head()
+
+train_test['位置'] = train_test['位置'].fillna(train_test['位置'].mean())
+train_test['区'] = train_test['区'].fillna(train_test['区'].mean())
+train_test['小区房屋出租数量'] = train_test['小区房屋出租数量'].fillna(train_test['小区房屋出租数量'].mean())
+# 地铁站点、地铁线路、距离
+# 提取数据
+pre_zhan = train_test[['地铁站点','位置','区','小区名']]
+pre_zhan_notnull = pre_zhan.loc[(train_test['地铁站点'].notnull())]
+pre_zhan_isnull = pre_zhan.loc[(train_test['地铁站点'].isnull())]
+X = pre_zhan_notnull.values[:,1:]
+Y = pre_zhan_notnull.values[:,0]
+# 用随机森林模型来训练数据
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X,Y)
+predictAges = RFR.predict(pre_zhan_isnull.values[:,1:])
+train_test.loc[train_test['地铁站点'].isnull(),['地铁站点']] = predictAges
+
+pre_zhan = train_test[['地铁线路','位置','区','小区名']]
+pre_zhan_notnull = pre_zhan.loc[(train_test['地铁线路'].notnull())]
+pre_zhan_isnull = pre_zhan.loc[(train_test['地铁线路'].isnull())]
+X = pre_zhan_notnull.values[:,1:]
+Y = pre_zhan_notnull.values[:,0]
+# 用随机森林模型来训练数据
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X,Y)
+predictAges = RFR.predict(pre_zhan_isnull.values[:,1:])
+train_test.loc[train_test['地铁线路'].isnull(),['地铁线路']] = predictAges
+
+pre_zhan = train_test[['距离','位置','区','小区名']]
+pre_zhan_notnull = pre_zhan.loc[(train_test['距离'].notnull())]
+pre_zhan_isnull = pre_zhan.loc[(train_test['距离'].isnull())]
+X = pre_zhan_notnull.values[:,1:]
+Y = pre_zhan_notnull.values[:,0]
+# 用随机森林模型来训练数据
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X,Y)
+predictAges = RFR.predict(pre_zhan_isnull.values[:,1:])
+train_test.loc[train_test['距离'].isnull(),['距离']] = predictAges
+
+pre_zhan = train_test[['出租方式','位置','区','小区名']]
+pre_zhan_notnull = pre_zhan.loc[(train_test['出租方式'].notnull())]
+pre_zhan_isnull = pre_zhan.loc[(train_test['出租方式'].isnull())]
+X = pre_zhan_notnull.values[:,1:]
+Y = pre_zhan_notnull.values[:,0]
+# 用随机森林模型来训练数据
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X,Y)
+predictAges = RFR.predict(pre_zhan_isnull.values[:,1:])
+train_test.loc[train_test['出租方式'].isnull(),['出租方式']] = predictAges
+
+pre_zhan = train_test[['装修情况','位置','区','小区名']]
+pre_zhan_notnull = pre_zhan.loc[(train_test['装修情况'].notnull())]
+pre_zhan_isnull = pre_zhan.loc[(train_test['装修情况'].isnull())]
+X = pre_zhan_notnull.values[:,1:]
+Y = pre_zhan_notnull.values[:,0]
+# 用随机森林模型来训练数据
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X,Y)
+predictAges = RFR.predict(pre_zhan_isnull.values[:,1:])
+train_test.loc[train_test['装修情况'].isnull(),['装修情况']] = predictAges
+
+pre_zhan = train_test[['居住状态','位置','区','小区名']]
+pre_zhan_notnull = pre_zhan.loc[(train_test['居住状态'].notnull())]
+pre_zhan_isnull = pre_zhan.loc[(train_test['居住状态'].isnull())]
+X = pre_zhan_notnull.values[:,1:]
+Y = pre_zhan_notnull.values[:,0]
+# 用随机森林模型来训练数据
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X,Y)
+predictAges = RFR.predict(pre_zhan_isnull.values[:,1:])
+train_test.loc[train_test['居住状态'].isnull(),['居住状态']] = predictAges
+
+drop_column = (['小区名', 'ID'])
+train_test.drop(drop_column, axis=1, inplace = True)
+
+train_test.head()
+
+columns = ('卧室数量', '卫的数量', '厅的数量', '总楼层', '楼层', '小区房屋出租数量')
+
+for col in columns:
+    lbl_enc = LabelEncoder()   # 离散型的数据转换成 000 到 n−1n-1n−1 之间的数
+    lbl_enc.fit(list(train_test[col].values)) 
+    train_test[col] = lbl_enc.transform(list(train_test[col].values))
+    
+columns = ('卧室数量', '卫的数量', '厅的数量', '总楼层', '楼层', '小区房屋出租数量')
+
+train_test=pd.get_dummies(train_test)  # 将类别变量转换为one-hot编码
+
+train=train_test[0:196539]
+test=train_test[196539:252818]
+
+train.Label = np.log1p(train.Label)
+
+del test['Label']
+X=train.drop(['Label'],axis=1)
+y=train.Label
+
+std_scaler=StandardScaler() # 归一化
+rbst_scaler=RobustScaler()  # RobustScaler 取四分位数
+power_transformer=PowerTransformer()  # 将类数据从任何分布映射到尽可能接近高斯分布
+X_std=std_scaler.fit_transform(X)
+X_rbst=rbst_scaler.fit_transform(X)
+X_pwr=power_transformer.fit_transform(X)
+
+test_std=std_scaler.fit_transform(test)
+test_rbst=rbst_scaler.fit_transform(test)
+test_pwr=power_transformer.fit_transform(test)
+
+X_train,X_test,y_train,y_test=train_test_split(X_pwr,y,test_size=0.4)
+print('X_train Shape :',X_train.shape)
+print('X_test Shape :',X_test.shape)
+print('y_train Shape :',y_train.shape)
+print('y_test Shape :',y_test.shape)
+
+lgb_regressor=lgb.LGBMRegressor(objective='regression', num_leaves=5, learning_rate=0.03, n_estimators=1938, max_bin=50, bagging_fraction=0.65,bagging_freq=5, bagging_seed=7, 
+                                feature_fraction=0.201, feature_fraction_seed=7,n_jobs=-1)
+lgb_regressor.fit(X_pwr, y)
+y_head=lgb_regressor.predict(X_test)
+print('-'*10+'LGBM'+'-'*10)
+print('R square Accuracy: ',r2_score(y_test,y_head))
+print('Mean Absolute Error Accuracy: ',mean_absolute_error(y_test,y_head))
+print('Mean Squared Error Accuracy: ',mean_squared_error(y_test,y_head))
+
+RFR = RandomForestRegressor(n_estimators=1000, n_jobs=-1)
+RFR.fit(X_pwr, y)
+y_head=lgb_regressor.predict(X_test)
+print('-'*10+'RFR'+'-'*10)
+print('R square Accuracy: ',r2_score(y_test,y_head))
+print('Mean Absolute Error Accuracy: ',mean_absolute_error(y_test,y_head))
+print('Mean Squared Error Accuracy: ',mean_squared_error(y_test,y_head))
